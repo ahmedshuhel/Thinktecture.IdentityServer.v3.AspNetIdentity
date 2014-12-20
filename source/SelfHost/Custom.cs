@@ -13,36 +13,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
+using System.Configuration;
 
 namespace SelfHost
 {
-    public class CustomDbContext : IdentityDbContext<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>
+    public class UserDbContext : IdentityDbContext<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>
     {
-        public CustomDbContext(string connString)
+        public UserDbContext(string connString)
             : base(connString)
         {
         }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AppUserRole>()
+                .ToTable("AppUserRoles");
+            modelBuilder.Entity<AppUserClaim>()
+                .ToTable("AppUserClaims");
+             modelBuilder.Entity<AppUserLogin>()
+                .ToTable("AppUserLogins");
+           modelBuilder.Entity<AppUser>()
+                .ToTable("AppUsers");
+            modelBuilder.Entity<AppRole>()
+                .ToTable("AppRoles");
+
+            modelBuilder.HasDefaultSchema("identity");
+
+        }
     }
-    public class CustomUserStore : UserStore<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>
+    public class AppUserStore : UserStore<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>
     {
-        public CustomUserStore(CustomDbContext ctx)
+        public AppUserStore(UserDbContext ctx)
             : base(ctx)
         {
         }
     }
-    public class CustomUser : IdentityUser<int, CustomUserLogin, CustomUserRole, CustomUserClaim> { }
-    public class CustomRole : IdentityRole<int, CustomUserRole> { }
-    public class CustomUserLogin : IdentityUserLogin<int> { }
-    public class CustomUserRole : IdentityUserRole<int> { }
-    public class CustomUserClaim : IdentityUserClaim<int> { }
+    public class AppUser : IdentityUser<int, AppUserLogin, AppUserRole, AppUserClaim> { }
+    public class AppRole : IdentityRole<int, AppUserRole> { }
+    public class AppUserLogin : IdentityUserLogin<int> { }
+    public class AppUserRole : IdentityUserRole<int> { }
+    public class AppUserClaim : IdentityUserClaim<int> { }
 
-    public class CustomUserManager : UserManager<CustomUser, int>
+    public class AppUserManager : UserManager<AppUser, int>
     {
-        public CustomUserManager(CustomUserStore store)
+        public AppUserManager(AppUserStore store)
             : base(store)
         {
         }
+    }
+
+    public class UserDbContextFactory : IDbContextFactory<UserDbContext>
+    {
+
+        public UserDbContext Create()
+        {
+            var connString = ConfigurationManager.ConnectionStrings["AspId"].ConnectionString;
+            return new UserDbContext(connString);
+        }
+
     }
 }

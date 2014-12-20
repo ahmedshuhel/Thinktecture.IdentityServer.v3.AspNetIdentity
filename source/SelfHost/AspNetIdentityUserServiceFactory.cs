@@ -27,38 +27,21 @@ namespace SelfHost
     {
         static AspNetIdentityUserServiceFactory()
         {
-#if USE_INT_PRIMARYKEY
-            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<CustomDbContext>());
-#else
-            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<IdentityDbContext>());
-#endif
+            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<UserDbContext>());
         }
         
         public static IUserService Factory(string connString)
         {
-#if USE_INT_PRIMARYKEY
-            connString += "_CustomPK";
 
-            var db = new IdentityDbContext<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>(connString);
-            var store = new UserStore<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>(db);
-            var mgr = new UserManager<CustomUser, int>(store);
+            var db = new IdentityDbContext<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>(connString);
+            var store = new UserStore<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>(db);
+            var mgr = new UserManager<AppUser, int>(store);
             mgr.PasswordValidator = new PasswordValidator
             {
                 RequiredLength = 3
             };
-            var userSvc = new AspNetIdentityUserService<CustomUser, int>(mgr, db);
+            var userSvc = new AspNetIdentityUserService<AppUser, int>(mgr, db);
             return userSvc;
-#else
-            var db = new IdentityDbContext<IdentityUser>(connString);
-            var store = new UserStore<IdentityUser>(db);
-            var mgr = new UserManager<IdentityUser>(store);
-            mgr.PasswordValidator = new PasswordValidator
-            {
-                RequiredLength = 3
-            };
-            var userSvc = new AspNetIdentityUserService<IdentityUser, string>(mgr, db);
-            return userSvc;
-#endif
         }
     }
 }

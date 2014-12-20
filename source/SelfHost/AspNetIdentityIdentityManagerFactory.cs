@@ -32,54 +32,31 @@ namespace Thinktecture.IdentityManager.Host
     {
         static AspNetIdentityIdentityManagerFactory()
         {
-#if USE_INT_PRIMARYKEY
-            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<CustomDbContext>());
-#else
-            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<IdentityDbContext>());
-#endif
+            System.Data.Entity.Database.SetInitializer(new System.Data.Entity.CreateDatabaseIfNotExists<UserDbContext>());
         }
 
         string connString;
         public AspNetIdentityIdentityManagerFactory(string connString)
         {
             this.connString = connString;
-#if USE_INT_PRIMARYKEY
-            this.connString += "_CustomPK";
-#endif
         }
         
         public IIdentityManagerService Create()
         {
-#if USE_INT_PRIMARYKEY
-            var db = new IdentityDbContext<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>(connString);
-            var store = new UserStore<CustomUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>(db);
-            var usermgr = new UserManager<CustomUser, int>(store);
+            var db = new IdentityDbContext<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>(connString);
+            var store = new UserStore<AppUser, AppRole, int, AppUserLogin, AppUserRole, AppUserClaim>(db);
+            var usermgr = new UserManager<AppUser, int>(store);
             usermgr.PasswordValidator = new PasswordValidator
             {
                 RequiredLength = 3
             };
 
-            var rolestore = new RoleStore<CustomRole, int, CustomUserRole>(db);
-            var rolemgr = new RoleManager<CustomRole, int>(rolestore);
+            var rolestore = new RoleStore<AppRole, int, AppUserRole>(db);
+            var rolemgr = new RoleManager<AppRole, int>(rolestore);
 
-            var svc = new Thinktecture.IdentityManager.AspNetIdentity.AspNetIdentityManagerService<CustomUser, int, CustomRole, int>(usermgr, rolemgr);
+            var svc = new Thinktecture.IdentityManager.AspNetIdentity.AspNetIdentityManagerService<AppUser, int, AppRole, int>(usermgr, rolemgr);
             var dispose = new DisposableIdentityManagerService(svc, db);
             return dispose;
-#else
-            var db = new IdentityDbContext<IdentityUser>(this.connString);
-            var userstore = new UserStore<IdentityUser>(db);
-            var usermgr = new Microsoft.AspNet.Identity.UserManager<IdentityUser>(userstore);
-            usermgr.PasswordValidator = new Microsoft.AspNet.Identity.PasswordValidator
-            {
-                RequiredLength = 3
-            };
-            var rolestore = new RoleStore<IdentityRole>(db);
-            var rolemgr = new Microsoft.AspNet.Identity.RoleManager<IdentityRole>(rolestore);
-
-            var svc = new Thinktecture.IdentityManager.AspNetIdentity.AspNetIdentityManagerService<IdentityUser, string, IdentityRole, string>(usermgr, rolemgr);
-            var dispose = new DisposableIdentityManagerService(svc, db);
-            return dispose;
-#endif
         }
     }
 }
