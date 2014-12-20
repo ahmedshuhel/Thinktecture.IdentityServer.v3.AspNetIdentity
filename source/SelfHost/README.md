@@ -30,3 +30,5 @@ Windows has a command line tool for manupulating the bindings.
 
 `netsh http add sslcert ipport=0.0.0.0:44333 certhash=6b7acc520305bfdb4f7252daeb2177cc091faae1 appid={0
 0112233-4455-6677-8899-AABBCCDDEEFF}`
+
+Sometimes the event log comes in handy to see there is a problem in the first place.
