@@ -89,7 +89,7 @@ namespace Thinktecture.IdentityServer.Host.Config
                         "oob://localhost/wpfclient",
                         
                         // JavaScript client
-                        "http://localhost:21575/index.html",
+                        "https://auth.local/app/app/index.html",
 
                         // MVC form post sample
                         "http://localhost:11716/account/signInCallback",

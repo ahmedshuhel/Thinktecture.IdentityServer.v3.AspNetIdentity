@@ -1,4 +1,5 @@
-﻿using Microsoft.Owin.Security.Facebook;
+﻿using System.Web.Http;
+using Microsoft.Owin.Security.Facebook;
 using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.Twitter;
 /*
@@ -16,10 +17,14 @@ using Microsoft.Owin.Security.Twitter;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using Microsoft.Owin.StaticFiles;
 using Owin;
 using SelfHost.Config;
 using Thinktecture.IdentityManager;
 using Thinktecture.IdentityServer.Core.Configuration;
+using System.IdentityModel.Tokens;
+using System.Collections.Generic;
+using Thinktecture.IdentityServer.v3.AccessTokenValidation;
 
 namespace SelfHost
 {
@@ -27,21 +32,52 @@ namespace SelfHost
     {
         public void Configuration(IAppBuilder app)
         {
+            app.Map("/app", jsapp =>
+            {
+                var opt = new StaticFileOptions();
+                jsapp.UseStaticFiles("/App");
+            });
+
             app.Map("/admin", adminApp =>
             {
                 var factory = new Thinktecture.IdentityManager.Host.AspNetIdentityIdentityManagerFactory("AspId");
                 adminApp.UseIdentityManager(new IdentityManagerConfiguration()
                 {
                     IdentityManagerFactory = factory.Create
+                    
                 });
+            });
+
+            app.Map("/api", apiApp =>
+            {
+                JwtSecurityTokenHandler.InboundClaimTypeMap = new Dictionary<string, string>();
+
+                apiApp.UseIdentityServerBearerTokenAuthentication(new IdentityServerBearerTokenAuthenticationOptions
+                {
+                    Authority = "https://auth.local",
+                    RequiredScopes = new[] { "write" }
+                });
+
+                var config = new HttpConfiguration();
+                config.Formatters.Remove(config.Formatters.XmlFormatter);
+
+                // Web API routes
+                config.MapHttpAttributeRoutes();
+
+                config.Routes.MapHttpRoute(
+                    name: "DefaultApi",
+                    routeTemplate: "{controller}",
+                    defaults: new { id = RouteParameter.Optional }
+                );
+
+                apiApp.UseWebApi(config);
             });
 
             var options = new IdentityServerOptions
             {
                 IssuerUri = "https://idsrv3.com",
+                SigningCertificate = Config.Certificate.Get(),
                 SiteName = "Thinktecture IdentityServer v3 - UserService-AspNetIdentity",
-
-                SigningCertificate = Certificate.Get(),
                 Factory = Factory.Configure("AspId"),
                 CorsPolicy = CorsPolicy.AllowAll,
                 AuthenticationOptions = new AuthenticationOptions
